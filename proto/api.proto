@@ -1,0 +1,16 @@
+syntax = "proto3";
+package api;
+
+
+
+message Req {
+    uint32 flag=1;
+}
+message Resp {
+    string keys=1;
+}
+
+
+service Api{
+    rpc GetKeys (Req) returns (Resp);
+}
