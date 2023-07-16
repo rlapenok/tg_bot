@@ -1558,6 +1558,7 @@ dependencies = [
 name = "tg_bot"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "dotenv",
  "env_logger",
  "google-authenticator",

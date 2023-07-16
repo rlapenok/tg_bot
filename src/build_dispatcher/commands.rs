@@ -12,4 +12,6 @@ pub enum Commands {
     Start,
     #[command(description = "Проведение аунетификации с помощью Google Authenticator")]
     StartAuth,
+    #[command(description = "Выбор существующих кошельков")]
+    GetWallets,
 }

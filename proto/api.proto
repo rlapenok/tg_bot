@@ -1,16 +1,19 @@
 syntax = "proto3";
 package api;
 
-
-
-message Req {
-    uint32 flag=1;
-}
-message Resp {
-    string keys=1;
+message GetKeysResp{
+    uint32 len=1;
 }
 
 
-service Api{
-    rpc GetKeys (Req) returns (Resp);
+enum Request{
+    GetKeys=0;
+}
+message GlobalRequest{
+    Request req=1;
+}
+
+
+service Router{
+        rpc GetKeys(GlobalRequest) returns (stream GetKeysResp);
 }

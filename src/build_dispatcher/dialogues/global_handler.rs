@@ -1,4 +1,3 @@
-use log::info;
 use teloxide::{
     requests::{Requester, ResponseResult},
     types::Message,
@@ -31,21 +30,12 @@ pub async fn other_msg_hanler_global(
     Ok(())
 }
 
-pub async fn get_wallet_handler_global(bot: Bot,msg: Message)->ResponseResult<()>{
-    
-    let chat_id=msg.chat.id;
-    bot.send_message(chat_id, "Братулец, я заебался писать этот код. Лучше работать на заводе)) епт ").await?;
-    Ok(())
-}
-
-
 pub async fn init_handler_global(
     bot: Bot,
     msg: Message,
     dialogue: GlobalDialogue,
     cmd: Commands,
 ) -> ResponseResult<()> {
-    info!("In init");
     let chat_id = msg.chat.id;
     match cmd {
         Commands::Start => {
@@ -60,9 +50,11 @@ pub async fn init_handler_global(
                 descr
             );
             bot.send_message(chat_id, resp).await?;
-            dialogue.update(Global::AuthState(Auth::Init)).await.unwrap();
+            dialogue
+                .update(Global::AuthState(Auth::Init))
+                .await
+                .unwrap();
             bot.send_message(chat_id, "Итак, вводи /startauth").await?;
-
         }
         _ => {
             bot.send_message(chat_id, "Братулец, введи /start").await?;

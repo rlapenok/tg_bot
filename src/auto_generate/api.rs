@@ -1,25 +1,48 @@
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Req {
+pub struct GetKeysResp {
     #[prost(uint32, tag = "1")]
-    pub flag: u32,
+    pub len: u32,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Resp {
-    #[prost(string, tag = "1")]
-    pub keys: ::prost::alloc::string::String,
+pub struct GlobalRequest {
+    #[prost(enumeration = "Request", tag = "1")]
+    pub req: i32,
+}
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum Request {
+    GetKeys = 0,
+}
+impl Request {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            Request::GetKeys => "GetKeys",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "GetKeys" => Some(Self::GetKeys),
+            _ => None,
+        }
+    }
 }
 /// Generated client implementations.
-pub mod api_client {
+pub mod router_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
     use tonic::codegen::http::Uri;
     #[derive(Debug, Clone)]
-    pub struct ApiClient<T> {
+    pub struct RouterClient<T> {
         inner: tonic::client::Grpc<T>,
     }
-    impl ApiClient<tonic::transport::Channel> {
+    impl RouterClient<tonic::transport::Channel> {
         /// Attempt to create a new client by connecting to a given endpoint.
         pub async fn connect<D>(dst: D) -> Result<Self, tonic::transport::Error>
         where
@@ -30,7 +53,7 @@ pub mod api_client {
             Ok(Self::new(conn))
         }
     }
-    impl<T> ApiClient<T>
+    impl<T> RouterClient<T>
     where
         T: tonic::client::GrpcService<tonic::body::BoxBody>,
         T::Error: Into<StdError>,
@@ -48,7 +71,7 @@ pub mod api_client {
         pub fn with_interceptor<F>(
             inner: T,
             interceptor: F,
-        ) -> ApiClient<InterceptedService<T, F>>
+        ) -> RouterClient<InterceptedService<T, F>>
         where
             F: tonic::service::Interceptor,
             T::ResponseBody: Default,
@@ -62,7 +85,7 @@ pub mod api_client {
                 http::Request<tonic::body::BoxBody>,
             >>::Error: Into<StdError> + Send + Sync,
         {
-            ApiClient::new(InterceptedService::new(inner, interceptor))
+            RouterClient::new(InterceptedService::new(inner, interceptor))
         }
         /// Compress requests with the given encoding.
         ///
@@ -97,8 +120,11 @@ pub mod api_client {
         }
         pub async fn get_keys(
             &mut self,
-            request: impl tonic::IntoRequest<super::Req>,
-        ) -> std::result::Result<tonic::Response<super::Resp>, tonic::Status> {
+            request: impl tonic::IntoRequest<super::GlobalRequest>,
+        ) -> std::result::Result<
+            tonic::Response<tonic::codec::Streaming<super::GetKeysResp>>,
+            tonic::Status,
+        > {
             self.inner
                 .ready()
                 .await
@@ -109,27 +135,33 @@ pub mod api_client {
                     )
                 })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static("/api.Api/GetKeys");
+            let path = http::uri::PathAndQuery::from_static("/api.Router/GetKeys");
             let mut req = request.into_request();
-            req.extensions_mut().insert(GrpcMethod::new("api.Api", "GetKeys"));
-            self.inner.unary(req, path, codec).await
+            req.extensions_mut().insert(GrpcMethod::new("api.Router", "GetKeys"));
+            self.inner.server_streaming(req, path, codec).await
         }
     }
 }
 /// Generated server implementations.
-pub mod api_server {
+pub mod router_server {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
-    /// Generated trait containing gRPC methods that should be implemented for use with ApiServer.
+    /// Generated trait containing gRPC methods that should be implemented for use with RouterServer.
     #[async_trait]
-    pub trait Api: Send + Sync + 'static {
+    pub trait Router: Send + Sync + 'static {
+        /// Server streaming response type for the GetKeys method.
+        type GetKeysStream: futures_core::Stream<
+                Item = std::result::Result<super::GetKeysResp, tonic::Status>,
+            >
+            + Send
+            + 'static;
         async fn get_keys(
             &self,
-            request: tonic::Request<super::Req>,
-        ) -> std::result::Result<tonic::Response<super::Resp>, tonic::Status>;
+            request: tonic::Request<super::GlobalRequest>,
+        ) -> std::result::Result<tonic::Response<Self::GetKeysStream>, tonic::Status>;
     }
     #[derive(Debug)]
-    pub struct ApiServer<T: Api> {
+    pub struct RouterServer<T: Router> {
         inner: _Inner<T>,
         accept_compression_encodings: EnabledCompressionEncodings,
         send_compression_encodings: EnabledCompressionEncodings,
@@ -137,7 +169,7 @@ pub mod api_server {
         max_encoding_message_size: Option<usize>,
     }
     struct _Inner<T>(Arc<T>);
-    impl<T: Api> ApiServer<T> {
+    impl<T: Router> RouterServer<T> {
         pub fn new(inner: T) -> Self {
             Self::from_arc(Arc::new(inner))
         }
@@ -189,9 +221,9 @@ pub mod api_server {
             self
         }
     }
-    impl<T, B> tonic::codegen::Service<http::Request<B>> for ApiServer<T>
+    impl<T, B> tonic::codegen::Service<http::Request<B>> for RouterServer<T>
     where
-        T: Api,
+        T: Router,
         B: Body + Send + 'static,
         B::Error: Into<StdError> + Send + 'static,
     {
@@ -207,19 +239,22 @@ pub mod api_server {
         fn call(&mut self, req: http::Request<B>) -> Self::Future {
             let inner = self.inner.clone();
             match req.uri().path() {
-                "/api.Api/GetKeys" => {
+                "/api.Router/GetKeys" => {
                     #[allow(non_camel_case_types)]
-                    struct GetKeysSvc<T: Api>(pub Arc<T>);
-                    impl<T: Api> tonic::server::UnaryService<super::Req>
+                    struct GetKeysSvc<T: Router>(pub Arc<T>);
+                    impl<
+                        T: Router,
+                    > tonic::server::ServerStreamingService<super::GlobalRequest>
                     for GetKeysSvc<T> {
-                        type Response = super::Resp;
+                        type Response = super::GetKeysResp;
+                        type ResponseStream = T::GetKeysStream;
                         type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
+                            tonic::Response<Self::ResponseStream>,
                             tonic::Status,
                         >;
                         fn call(
                             &mut self,
-                            request: tonic::Request<super::Req>,
+                            request: tonic::Request<super::GlobalRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move { (*inner).get_keys(request).await };
@@ -244,7 +279,7 @@ pub mod api_server {
                                 max_decoding_message_size,
                                 max_encoding_message_size,
                             );
-                        let res = grpc.unary(method, req).await;
+                        let res = grpc.server_streaming(method, req).await;
                         Ok(res)
                     };
                     Box::pin(fut)
@@ -264,7 +299,7 @@ pub mod api_server {
             }
         }
     }
-    impl<T: Api> Clone for ApiServer<T> {
+    impl<T: Router> Clone for RouterServer<T> {
         fn clone(&self) -> Self {
             let inner = self.inner.clone();
             Self {
@@ -276,7 +311,7 @@ pub mod api_server {
             }
         }
     }
-    impl<T: Api> Clone for _Inner<T> {
+    impl<T: Router> Clone for _Inner<T> {
         fn clone(&self) -> Self {
             Self(Arc::clone(&self.0))
         }
@@ -286,7 +321,7 @@ pub mod api_server {
             write!(f, "{:?}", self.0)
         }
     }
-    impl<T: Api> tonic::server::NamedService for ApiServer<T> {
-        const NAME: &'static str = "api.Api";
+    impl<T: Router> tonic::server::NamedService for RouterServer<T> {
+        const NAME: &'static str = "api.Router";
     }
 }
